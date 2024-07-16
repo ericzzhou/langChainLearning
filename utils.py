@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
 from langchain_openai import OpenAI
 from langchain_openai import ChatOpenAI
@@ -334,3 +334,98 @@ def create_chat_prompt_template_from_template(
             messages.append(ai_message_prompt)
 
     return ChatPromptTemplate.from_messages(messages)
+
+
+# 创建一个 FewShotPromptTemplate对象
+from langchain.prompts import PromptTemplate
+
+
+def create_fewshot_prompt_template_by_samples(
+    example_prompt_template: PromptTemplate,
+    suffix: str,
+    input_variables: List[str],
+    examples=None,
+):
+    """
+    创建一个包含少量示例(FewShotPromptTemplate)的提示模板。
+
+    Args:
+    - example_prompt_template (PromptTemplate): 用于生成示例的提示词模板。
+    - suffix (str): 在提示末尾添加的后缀。
+    - input_variables (List[str]): 提示中使用的输入变量列表。
+    - examples (list, optional): 提供的示例列表，默认为空列表。
+
+    Returns:
+    - FewShotPromptTemplate: 创建的 FewShotPromptTemplate 实例。
+
+    示例:
+    example_prompt_template = PromptTemplate.from_template(
+        template="你是一位专业的鲜花店文案撰写员。对于售价为 {price} 元的 {flower_name} ，你能提供一个吸引人的简短描述吗？"
+    )
+    few_shot_template = create_fewshot_prompt_template(
+        example_prompt=example_prompt_template,
+        suffix="这是一个例子：",
+        input_variables=["price", "flower_name"],
+        examples=[{"price": 100, "flower_name": "月季花"}],
+    )
+    print(few_shot_template)
+    """
+    from langchain.prompts import FewShotPromptTemplate
+
+    if examples is None:
+        examples = []
+    return FewShotPromptTemplate(
+        examples=examples,
+        example_prompt=example_prompt_template,
+        suffix=suffix,
+        input_variables=input_variables,
+    )
+
+
+from langchain.prompts.example_selector import (
+    SemanticSimilarityExampleSelector,
+)
+
+from langchain_community.vectorstores import Chroma
+
+
+def create_fewshot_prompt_template_by_example_selector(
+    examples: Optional[List[dict]],
+    prefix: str,
+    suffix: str,
+    input_variables: List[str],
+    example_prompt_template: str,
+    example_input_variables: List[str],
+):
+    """
+    初始化一个基于语义相似度的示例选择器并创建 FewShotPromptTemplate 对象。
+
+    Args:
+    - examples (List[Dict]): 示例列表，每个示例是一个字典，包含提示和完成。
+    - prefix (str): 提示前缀。
+    - suffix (str): 提示后缀。
+    - input_variables (List[str]): 输入变量。
+    - example_prompt_template (str): 示例提示模板。
+    - example_input_variables (List[str]): 示例输入变量。
+
+    Returns:
+    - FewShotPromptTemplate: 初始化的 FewShotPromptTemplate 对象。
+    """
+    from langchain.prompts import FewShotPromptTemplate
+
+    embeddings = OpenAIEmbeddings(openai_api_type=load_openai_api_key())
+    example_selector = SemanticSimilarityExampleSelector.from_examples(
+        examples=examples, embeddings=embeddings, vectorstore_cls=Chroma
+    )
+
+    example_prompt = create_prompt_from_template(
+        template=example_prompt_template,
+        format_instructions=example_input_variables,
+    )
+    return FewShotPromptTemplate(
+        example_selector=example_selector,
+        prefix=prefix,
+        suffix=suffix,
+        input_variables=input_variables,
+        example_prompt=example_prompt,
+    )
