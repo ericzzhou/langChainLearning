@@ -22,39 +22,43 @@ def load_huggingfacehub_api_token():
     return os.environ["HUGGINGFACEHUB_API_TOKEN"]
 
 
-def create_llm(openai_api_key=None, model="gpt-3.5-turbo-instruct", temperature=0.3):
-    """Create a LlamaIndex language model."""
+def create_llm(
+    openai_api_key=None,
+    model="gpt-3.5-turbo-instruct",
+    temperature=0.3,
+    is_chat_model=False,
+    max_tokens=200,
+):
+    """
+    创建一个 OpenAI 语言模型实例（LLM）。
+
+    参数:
+    - openai_api_key (str, optional): OpenAI API 密钥。如果未提供，则从环境中加载。
+    - model (str, optional): 要使用的模型名称。默认为 "gpt-3.5-turbo-instruct",制定使用聊天模型时，默认为 gpt-4o。
+    - temperature (float, optional): 生成文本的随机性。较低的值会使输出更确定。默认为 0.3。
+    - is_chat_model (bool, optional): 指定是否使用聊天模型。默认为 False。
+    - max_tokens (int, optional): 聊天模型使用，生成的最大标记数。默认为 200。
+
+    返回:
+    - OpenAI 或 ChatOpenAI 实例，取决于 is_chat_model 的值。
+    """
     if openai_api_key is None:
         openai_api_key = load_openai_api_key()
+
+    if is_chat_model:
+        model = "gpt-4o"
+        # 如果 is_chat_model 为 True，则返回 ChatOpenAI 实例
+        return ChatOpenAI(
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            api_key=openai_api_key,
+        )
+    # 如果 is_chat_model 为 False，则返回 OpenAI 实例
     return OpenAI(
         model=model,
         temperature=temperature,
         openai_api_key=openai_api_key,
-    )
-
-
-def create_chat_model(
-    openai_api_key=None, model_name="gpt-4", temperature=0, max_tokens=200
-):
-    """
-    创建并返回一个 OpenAI Chat 模型实例。
-
-    参数：
-    openai_api_key (str): OpenAI API 密钥。如果未提供，将调用 `load_openai_api_key()` 加载。
-    model_name (str): 模型名称。默认值为 "gpt-4"。
-    temperature (float): 用于生成文本的温度值。默认值为 0。较高的温度值会使生成的文本更具创造性和随机性，较低的温度值会使生成的文本更具确定性。
-    max_tokens (int): 生成的最大 token 数。默认值为 200。
-
-    返回值：
-    ChatOpenAI: 配置好的 OpenAI Chat 模型实例。
-    """
-    if openai_api_key is None:
-        openai_api_key = load_openai_api_key()
-    return ChatOpenAI(
-        model=model_name,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        api_key=openai_api_key,
     )
 
 
@@ -205,7 +209,7 @@ def create_qa_chain(vectorstore, llm=None):
         - 使用 RetrievalQA.from_chain_type 创建一个检索问答系统链。
     """
     if llm is None:
-        llm = create_chat_model(model_name="gpt-4o")
+        llm = create_llm(model_name="gpt-4o", is_chat_model=True)
     # 实例化一个 MultiQueryRetriever
     retriever_from_llm = MultiQueryRetriever.from_llm(
         llm=llm,
@@ -301,6 +305,7 @@ def create_chat_prompt_template_from_template(
     system_template: str = "你是一个友好的AI助手",
     human_template: str = None,
     ai_template: str = None,
+    cot_template: str = None,
 ):
     """
     根据提供的模板创建聊天提示模板。
@@ -309,9 +314,10 @@ def create_chat_prompt_template_from_template(
     - system_template (str): 系统消息的模板，默认为 "你是一个友好的AI助手"。
     - human_template (str): 人类消息的模板，可选。
     - ai_template (str): AI 消息的模板，可选。
+    - cot_template: 系统 COT（Chain of Thought）消息模板，可选。
 
     Returns:
-    - ChatPromptTemplate: 创建的聊天提示模板实例。
+    - 一个 ChatPromptTemplate 对象，包含从模板生成的消息。
     """
 
     messages = []
@@ -322,7 +328,10 @@ def create_chat_prompt_template_from_template(
         )
         if system_message_prompt:
             messages.append(system_message_prompt)
-
+    if not isNullOrEmpty(cot_template):
+        system_cot_prompt = SystemMessagePromptTemplate.from_template(cot_template)
+        if system_cot_prompt:
+            messages.append(system_cot_prompt)
     if not isNullOrEmpty(human_template):
         human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
         if human_message_prompt:

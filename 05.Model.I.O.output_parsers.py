@@ -1,4 +1,4 @@
-from utils import create_llm, create_output_parser, create_prompt_template
+from utils import create_llm, create_output_parser, create_prompt_from_template
 
 
 from langchain.prompts import PromptTemplate
@@ -69,7 +69,7 @@ format_instructions = output_parser.get_format_instructions()
 # ```
 
 # 根据原始模板创建提示，同时在提示中加入输出解析器的说明
-prompt = create_prompt_template(template, format_instructions)
+prompt = create_prompt_from_template(template, format_instructions)
 print(prompt)
 
 # 数据准备
@@ -82,4 +82,4 @@ for flower, price in zip(flowers, prices):
 
     parsed_output = output_parser.parse(output)
     parsed_output["flower"] = flower
-    # print(parsed_output)
+    print(parsed_output)
