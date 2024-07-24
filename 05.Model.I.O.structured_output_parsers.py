@@ -1,4 +1,4 @@
-from utils import create_llm, create_output_parser, create_prompt_from_template
+from utils import create_llm, create_structured_output_parser, create_prompt_from_template
 
 
 from langchain.prompts import PromptTemplate
@@ -52,7 +52,7 @@ response_schemas = [
 ]
 
 # 创建输出解释器
-output_parser = create_output_parser(response_schemas)
+output_parser = create_structured_output_parser(response_schemas)
 
 # 获取格式提示
 format_instructions = output_parser.get_format_instructions()

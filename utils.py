@@ -229,9 +229,33 @@ def create_qa_chain(vectorstore, llm=None):
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 
 
-def create_output_parser(response_schemas: List[ResponseSchema]):
+def create_pydantic_output_parser(pydantic_object):
     """
-    创建一个输出解析器对象，根据提供的响应模式列表生成解析器。
+    创建一个用于解析 Pydantic 对象输出的解析器。
+
+    参数:
+    pydantic_object (BaseModel): 需要用于输出解析的 Pydantic 模型类。
+
+    返回:
+    PydanticOutputParser: Pydantic 输出解析器实例。
+    """
+    from langchain.output_parsers import PydanticOutputParser
+
+    # # 定义我们想要接收的数据格式
+    # from pydantic import BaseModel, Field
+    # class FlowerDescription(BaseModel):
+    #     flower_type: str = Field(description="鲜花的种类")
+    #     price: int = Field(description="鲜花的价格")
+    #     description: str = Field(description="鲜花的描述文案")
+    #     reason: str = Field(description="为什么要这样写这个文案")
+    
+    # 创建 PydanticOutputParser 实例，并传入 Pydantic 模型类
+    return PydanticOutputParser(pydantic_object=pydantic_object)
+
+
+def create_structured_output_parser(response_schemas: List[ResponseSchema]):
+    """
+    创建一个结构化输出解析器对象，根据提供的响应模式列表生成解析器。
 
     Args:
     - response_schemas (List[ResponseSchema]): 包含响应模式的列表，每个模式定义了一个响应字段的名称、类型和描述。
@@ -438,3 +462,57 @@ def create_fewshot_prompt_template_by_example_selector(
         input_variables=input_variables,
         example_prompt=example_prompt,
     )
+
+
+import requests
+from langchain.llms import BaseLLM
+from langchain_core.messages import BaseMessage
+
+
+class create_local_llm(BaseLLM):
+    """
+    一个自定义的 LLM 类，用于通过 API 与本地部署的 Llama3 模型交互。
+    """
+
+    def __init__(self, api_url, api_key):
+        """
+        初始化 create_local_llm 实例。
+
+        参数:
+        api_url (str): 本地 API 端点的 URL。
+        api_key (str): 认证所需的 API 密钥。
+        """
+        self.api_url = api_url
+        self.api_key = api_key
+
+    def _call(
+        self,
+        prompt: List[BaseMessage],
+        model: str = "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF",
+        stop: list = None,
+        temperature: float = 0.7,
+    ) -> str:
+        """
+        向本地 Llama3 API 发送请求并返回响应。
+
+        参数:
+        prompt (List[BaseMessage]): 模型的提示消息。
+        model (str): 模型标识符。
+        stop (list, optional): 停止词列表。
+        temperature (float, optional): 采样温度。
+
+        返回:
+        str: 模型的响应。
+        """
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "stop": stop,
+            "temperature": temperature,
+        }
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        response = requests.post(self.api_url, json=payload, headers=headers)
+        response.raise_for_status()
+        return response.json()
