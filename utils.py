@@ -248,7 +248,7 @@ def create_pydantic_output_parser(pydantic_object):
     #     price: int = Field(description="鲜花的价格")
     #     description: str = Field(description="鲜花的描述文案")
     #     reason: str = Field(description="为什么要这样写这个文案")
-    
+
     # 创建 PydanticOutputParser 实例，并传入 Pydantic 模型类
     return PydanticOutputParser(pydantic_object=pydantic_object)
 
@@ -280,26 +280,33 @@ def create_structured_output_parser(response_schemas: List[ResponseSchema]):
     return StructuredOutputParser.from_response_schemas(response_schemas)
 
 
-def create_prompt_from_template(template: str, format_instructions=None):
+from langchain_core.output_parsers import BaseOutputParser
+
+
+def create_prompt_from_template(
+    template: str,
+    format_instructions=None,
+    output_parser: BaseOutputParser | None = None,
+):
     """
-    根据模板和格式说明创建一个提示模板对象。
+    从模板字符串创建 PromptTemplate 实例。
 
     参数：
-        template (str): 提示模板字符串。
-        format_instructions (str, optional): 包含格式说明的字符串。如果提供，则会添加到提示模板中。
+    - template (str): 用于生成提示的模板字符串。
+    - format_instructions (可选): 用于格式化的说明字符串，默认为 None。
+    - output_parser (BaseOutputParser | None): 用于解析输出的解析器实例，默认为 None。
 
     返回：
-        PromptTemplate: 创建的提示模板对象。
+    - PromptTemplate: 创建的 PromptTemplate 实例。
     """
-    from langchain.prompts import PromptTemplate
-
     if format_instructions is None:
-        return PromptTemplate.from_template(template=template)
-    else:
-        return PromptTemplate.from_template(
-            template=template,
-            partial_variables={"format_instructions": format_instructions},
-        )
+        return PromptTemplate(template=template, output_parser=output_parser)
+
+    return PromptTemplate(
+        template=template,
+        output_parser=output_parser,
+        partial_variables={"format_instructions": format_instructions},
+    )
 
 
 from langchain.prompts import (
