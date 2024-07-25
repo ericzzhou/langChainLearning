@@ -6,6 +6,12 @@ from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEndpoint
 
 
+def load_env_variables(key):
+    """Load environment variables from .env file."""
+    load_dotenv()
+    return os.environ[key]
+
+
 def load_openai_api_key():
     """Load the OpenAI API key from the environment variable."""
     load_dotenv()
