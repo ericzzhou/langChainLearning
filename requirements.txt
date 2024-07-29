@@ -28,6 +28,7 @@ docx2txt==0.8
 email_validator==2.2.0
 exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1704921103267/work
 executing @ file:///home/conda/feedstock_root/build_artifacts/executing_1698579936712/work
+faiss-cpu==1.8.0.post1
 fastapi==0.111.1
 fastapi-cli==0.0.4
 filelock==3.15.4
@@ -71,10 +72,10 @@ jupyter_core @ file:///C:/b/abs_beftpbuevw/croot/jupyter_core_1718818307097/work
 kubernetes==30.1.0
 langchain==0.2.11
 langchain-community==0.2.7
-langchain-core==0.2.23
+langchain-core==0.2.24
 langchain-experimental==0.0.63
 langchain-huggingface==0.0.3
-langchain-openai==0.1.14
+langchain-openai==0.1.19
 langchain-text-splitters==0.2.2
 langsmith==0.1.84
 lxml==5.2.2
