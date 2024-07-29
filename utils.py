@@ -339,7 +339,7 @@ def isNullOrEmpty(value: str):
 
 
 def create_chat_prompt_template_from_template(
-    system_template: str = "你是一个友好的AI助手",
+    system_template: str = None,
     human_template: str = None,
     ai_template: str = None,
     cot_template: str = None,
@@ -348,7 +348,7 @@ def create_chat_prompt_template_from_template(
     根据提供的模板创建聊天提示模板。
 
     Args:
-    - system_template (str): 系统消息的模板，默认为 "你是一个友好的AI助手"。
+    - system_template (str): 系统消息的模板，，可选。
     - human_template (str): 人类消息的模板，可选。
     - ai_template (str): AI 消息的模板，可选。
     - cot_template: 系统 COT（Chain of Thought）消息模板，可选。
